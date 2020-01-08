@@ -1,0 +1,11 @@
+@Autowired
+private RedisTemplate redisTemplate;
+
+//设置redis的key
+RedisAtomicLong entityIdCounter = new RedisAtomicLong("contract:" + contractId + ":" + approvedId, redisTemplate.getConnectionFactory());
+//过期时间
+entityIdCounter.expire(30, TimeUnit.MINUTES);
+//获取key的value
+Long num = entityIdCounter.get();
+//获取并自增
+entityIdCounter.getAndIncrement();

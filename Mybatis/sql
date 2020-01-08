@@ -1,0 +1,50 @@
+///批量执行多条sql时使用案例 begin end;
+<update id="updateScoreAndinsertScoreWater">
+    begin
+    <foreach collection="list" item="item">
+      update AUTH.T_USER_SCORE_ACCOUNT
+      set TOTAL_SCORE = TOTAL_SCORE + #{item.dealScore},
+      UPDATE_BY = #{item.userId},
+      UPDATE_TIME = sysdate,
+      VERSION = VERSION + 1
+      where USER_SCORE_ACCOUNT_ID =
+      (SELECT b.USER_SCORE_ACCOUNT_ID from AUTH.BMS_USER_ROLE_REGION a
+      left join AUTH.T_USER_SCORE_ACCOUNT b on b.COMPANY_ID = a.BMS_ADMIN_REGION_ID
+      where
+      a.BMS_USER_ID = #{item.userId}
+      );
+      insert into AUTH.T_USER_SCORE_ACCOUNT_WATER
+      (
+      USER_SCORE_ACCOUNT_WATER_ID,
+      USER_SCORE_ACCOUNT_ID,
+      TYPE,
+      TYPE_DETAIL,
+      SCORE,
+      REMAIN_SCORE,
+      CREATE_BY,
+      CREATE_TIME,
+      VALID,
+      VERSION,
+      RELATION_ID
+      )
+      values
+      (
+      getseq(),
+      (SELECT b.USER_SCORE_ACCOUNT_ID from AUTH.BMS_USER_ROLE_REGION a
+      left join AUTH.T_USER_SCORE_ACCOUNT b on b.COMPANY_ID = a.BMS_ADMIN_REGION_ID
+      where a.BMS_USER_ID = #{item.userId}),
+      decode(sign(#{item.dealScore}),1,1,-1,2),
+      #{item.typeDetail},
+      ABS(#{item.dealScore}),
+      (SELECT b.TOTAL_SCORE from AUTH.BMS_USER_ROLE_REGION a
+      left join AUTH.T_USER_SCORE_ACCOUNT b on b.COMPANY_ID = a.BMS_ADMIN_REGION_ID
+      where a.BMS_USER_ID = #{item.userId}),
+      #{item.userId},
+      sysdate,
+      1,
+      1,
+      #{item.relationId}
+      );
+    </foreach>
+    end;
+  </update>

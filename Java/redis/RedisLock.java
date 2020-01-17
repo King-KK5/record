@@ -47,7 +47,7 @@ public class RedisLock {
      */
     public boolean doLock(String key){
         //如果不存在就设置锁的对象及超时时间
-        if(redisTemplate.opsForValue().setIfAbsent(key,key,RedisConstant.EXPIRE_TIME, TimeUnit.MILLISECONDS)){
+        if(redisTemplate.opsForValue().setIfAbsent(key,RedisConstant.EXPIRE_TIME,RedisConstant.EXPIRE_TIME, TimeUnit.MILLISECONDS)){
             return true;
         }
         return false;

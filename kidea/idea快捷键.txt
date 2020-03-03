@@ -1,0 +1,58 @@
+Shift+Shift搜索任何東西
+
+Ctrl+F是在本页查找，Ctrl+Shift+F是全局查找
+
+Alt+F7查找类或方法在哪被使用
+
+Ctrl+Shift+N按文件名搜索文件
+
+Alt+Insert 在编辑窗口中点击可以生成构造函数、toString、getter/setter、重写父类方法等
+
+Ctrl+J可以查看所有模板 fori/sout/psvm+Tab
+
+Ctrl+Shift+Enter 自动补全末尾的字符
+
+Alt+Enter快速修复
+
+Ctrl+Space代码提示，还有更智能地按类型信息提示Ctrl+Shift+Space
+
+这榜单阵容太豪华了，后几名都是如此有用，毫不示弱。
+
+?  Top #10切来切去：Ctrl+Tab
+
+?  Top #9选你所想：Ctrl+W
+
+?  Top #8代码生成：Template/Postfix +Tab
+
+?  Top #7发号施令：Ctrl+Shift+A
+
+?  Top #6无处藏身：Shift+Shift
+
+?  Top #5自动完成：Ctrl+Shift+Enter
+
+?  Top #4创造万物：Alt+Insert
+
+太难割舍，前三名并列吧！
+
+?  Top #1智能补全：Ctrl+Shift+Space
+
+?  Top #1自我修复：Alt+Enter
+
+?  Top #1重构一切：Ctrl+Shift+Alt+T
+
+ctrl+alt+t  选中想被try/catch包围的语句
+shift+alt+u   驼峰命名
+ctrl+alt+u    类图
+ctrl+shift+x    翻译当前并替换
+ctrl+shift+o    翻译页面
+ctrl+shift+y    翻译当前
+shift+ctrl+u 大小写的切换
+Ctrl+Alt+L   格式化代码
+Ctrl+D 将当前行复制到下一行
+itar 生成array for代码块
+
+-------         iter 生成增强for
+
+-------         itli 生成List的遍历
+
+-------         itit 生成iterator 迭代

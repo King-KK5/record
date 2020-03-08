@@ -1,0 +1,1160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.emotte.hss.core.order.mapper.OrderMapper">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.emotte.hss.core.order.model.po.OrderPO" id="orderMap">
+        <result property="orderId" column="order_id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="orderType" column="order_type"/>
+        <result property="orderStatus" column="order_status"/>
+        <result property="customerId" column="customer_id"/>
+        <result property="customerName" column="customer_name"/>
+        <result property="customerMobile" column="customer_mobile"/>
+        <result property="customerAreaCode" column="customer_area_code"/>
+        <result property="customerArea" column="customer_area"/>
+        <result property="serviceAddress" column="service_address"/>
+        <result property="workTypeId" column="work_type_id"/>
+        <result property="workType" column="work_type"/>
+        <result property="paidAmount" column="paid_amount"/>
+        <result property="depositAmount" column="deposit_amount"/>
+        <result property="refundAmount" column="refund_amount"/>
+        <result property="paidServiceAmount" column="paid_service_amount"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createByName" column="create_by_name"/>
+        <result property="butlerBy" column="butler_by"/>
+        <result property="butlerName" column="butler_name"/>
+        <result property="butlerMobile" column="butler_mobile"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="valid" column="valid"/>
+    </resultMap>
+
+    <select id="countCombineStatistic" parameterType="com.emotte.hss.common.vo.achievementstatistic.StatisticReqVO" resultType="java.lang.Integer">
+        select count(1)
+        from t_order o
+        <where>
+            o.valid = 1
+            <if test="companyId != null">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="butlerId != null">
+                AND o.butler_by = #{butlerId}
+            </if>
+            <if test="startTime != null">
+                AND o.create_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND o.create_time &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="countStatistic" parameterType="com.emotte.hss.common.vo.achievementstatistic.StatisticReqVO" resultType="java.lang.Integer">
+        select count(1)
+        from t_order o
+        left join t_order_transaction ot on ot.order_id = o.order_id
+        <where>
+            o.valid = 1
+            AND ot.valid = 1
+            AND ot.account_period = 1
+            and ot.paid_amount &gt;= ot.transaction_amount
+            <if test="companyId != null">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="butlerId != null">
+                AND o.butler_by = #{butlerId}
+            </if>
+            <if test="startTime != null">
+                AND ot.update_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND ot.update_time &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="countRoadStatistic" parameterType="com.emotte.hss.common.vo.achievementstatistic.StatisticReqVO" resultType="java.lang.Integer">
+        select count(1)
+        from t_order o
+        left join t_order_transaction ot on ot.order_id = o.order_id
+        <where>
+            o.valid = 1
+            AND ot.valid = 1
+            AND o.order_status = 2
+            AND ot.account_period = 1
+            and ot.paid_amount &lt; ot.transaction_amount
+            <if test="companyId != null">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="butlerId != null">
+                AND o.butler_by = #{butlerId}
+            </if>
+            <if test="startTime != null">
+                AND ot.update_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND ot.update_time &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="countDayDetailStatistic" parameterType="com.emotte.hss.common.vo.achievementstatistic.StatisticReqVO" resultType="com.emotte.hss.common.vo.achievementstatistic.DetailStatisticRespVO">
+        select
+        DATE_FORMAT(ot.update_time, '%Y-%m-%d') date,
+        count(1) count
+        from t_order o
+        left join t_order_transaction ot on ot.order_id = o.order_id
+        <where>
+            o.valid = 1
+            AND ot.valid = 1
+            AND ot.account_period = 1
+            AND ot.paid_amount &gt;= ot.transaction_amount
+            <if test="companyId != null">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="butlerId != null">
+                AND o.butler_by = #{butlerId}
+            </if>
+            <if test="startTime != null">
+                AND ot.update_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND ot.update_time &lt;= #{endTime}
+            </if>
+        </where>
+        group by DATE_FORMAT(ot.update_time, '%Y-%m-%d')
+    </select>
+
+    <select id="countCombineDayDetailStatistic" parameterType="com.emotte.hss.common.vo.achievementstatistic.StatisticReqVO" resultType="com.emotte.hss.common.vo.achievementstatistic.DetailStatisticRespVO">
+        select
+        DATE_FORMAT(o.create_time, '%Y-%m-%d') date,
+        count(1) count
+        from t_order o
+        <where>
+            o.valid = 1
+            <if test="companyId != null">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="butlerId != null">
+                AND o.butler_by = #{butlerId}
+            </if>
+            <if test="startTime != null">
+                AND o.create_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND o.create_time &lt;= #{endTime}
+            </if>
+        </where>
+        group by DATE_FORMAT(o.create_time, '%Y-%m-%d')
+    </select>
+
+    <select id="countCombineButlerDetailStatistic" parameterType="com.emotte.hss.common.vo.achievementstatistic.StatisticReqVO" resultType="com.emotte.hss.common.vo.achievementstatistic.DetailStatisticRespVO">
+        select
+          o.butler_by butlerId,
+          o.butler_name butlerName,
+          count(1) count
+        from t_order o
+        <where>
+            o.valid = 1
+            <if test="companyId != null">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="butlerId != null">
+                AND o.butler_by = #{butlerId}
+            </if>
+            <if test="butlerName != null and butlerName != ''">
+                AND o.butler_name like CONCAT('%',#{butlerName},'%')
+            </if>
+            <if test="startTime != null">
+                AND o.create_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND o.create_time &lt;= #{endTime}
+            </if>
+        </where>
+        group by o.butler_name,o.butler_by
+        ORDER BY count desc
+    </select>
+
+    <select id="countButlerDetailStatistic" parameterType="com.emotte.hss.common.vo.achievementstatistic.StatisticReqVO" resultType="com.emotte.hss.common.vo.achievementstatistic.DetailStatisticRespVO">
+        select
+          o.butler_by butlerId,
+          o.butler_name butlerName,
+          count(1) count
+        from t_order o
+        left join t_order_transaction ot on ot.order_id = o.order_id
+        <where>
+            o.valid = 1
+            AND ot.valid = 1
+            AND o.order_status = 2
+            AND ot.account_period = 1
+            and ot.paid_amount &gt; 0
+            and ot.paid_amount &lt; ot.transaction_amount
+            <if test="companyId != null">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="butlerId != null">
+                AND o.butler_by = #{butlerId}
+            </if>
+            <if test="butlerName != null and butlerName != ''">
+                AND o.butler_name like CONCAT('%',#{butlerName},'%')
+            </if>
+            <if test="startTime != null">
+                AND ot.update_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND ot.update_time &lt;= #{endTime}
+            </if>
+        </where>
+        group by o.butler_name,o.butler_by
+        ORDER BY count desc
+    </select>
+
+    <select id="countMax" parameterType="com.emotte.hss.common.vo.achievementstatistic.StatisticReqVO" resultType="com.emotte.hss.common.vo.achievementstatistic.ButlerMaxStatisticRespVO">
+        select
+            o.butler_by butlerId,
+            o.butler_name butlerName,
+            count(1) count
+        from t_order o
+        left join t_order_transaction ot on ot.order_id = o.order_id
+        <where>
+            o.valid = 1
+            AND ot.valid = 1
+            AND o.order_status = 2
+            AND ot.account_period = 1
+            and ot.paid_amount &gt; 0
+            and ot.paid_amount &lt; ot.transaction_amount
+            <if test="companyId != null">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="butlerId != null">
+                AND o.butler_by = #{butlerId}
+            </if>
+            <if test="startTime != null">
+                AND ot.update_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND ot.update_time &lt;= #{endTime}
+            </if>
+        </where>
+        group by o.butler_name,o.butler_by ORDER BY count desc LIMIT 1
+    </select>
+
+    <select id="pageOrderSign" parameterType="com.emotte.hss.common.vo.order.OrderPageReqVO" resultType="com.emotte.hss.common.vo.order.OrderPageRepVO">
+        select
+        o.order_id as "orderId",
+        o.company_id as "companyId",
+        o.company_name as "companyName",
+        o.order_no as "orderNo",
+        o.order_type as "orderType",
+        o.order_status as "orderStatus",
+        o.customer_id as "customerId",
+        o.customer_name as "customerName",
+        o.customer_mobile as "customerMobile",
+        o.customer_area_code as "customerAreaCode",
+        o.customer_area as "customerArea",
+        o.service_address as "serviceAddress",
+        o.work_type_id as "workTypeId",
+        o.work_type as "workType",
+        o.paid_amount as "paidAmount",
+        o.deposit_amount as "depositAmount",
+        o.refund_amount as "refundAmount",
+        o.paid_service_amount as "paidServiceAmount",
+        o.create_by as "createBy",
+        o.create_by_name as "createByName",
+        o.butler_by as "butlerBy",
+        o.butler_name as "butlerName",
+        o.butler_mobile as "butlerMobile",
+        o.create_time as "createTime",
+        o.update_time as "updateTime",
+        s.service_personal_id as "servicePersonalId",
+        s.service_personal_name as "servicePersonalName",
+        s.service_personal_mobile as "servicePersonalMobile",
+        s.service_personal_company_id as "servicePersonalCompanyId",
+        s.service_personal_company_name as "servicePersonalCompanyName"
+        from t_order o
+        left join t_order_service_personal_rp s on o.order_id = s.order_id
+        <where>
+            o.valid = 1
+            AND s.valid = 1
+            AND s.service_personal_status = 3
+            AND o.order_status = 1
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no = #{orderNo}
+            </if>
+            <if test="companyId != null and companyId != ''">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="companyName != null and companyName != ''">
+                AND o.company_name like CONCAT('%',#{companyName},'%')
+            </if>
+            <if test="butlerBy != null and butlerBy != ''">
+                AND o.butler_by = #{butlerBy}
+            </if>
+            <if test="butlerName != null and butlerName != ''">
+                AND o.butler_name like CONCAT('%',#{butlerName},'%')
+            </if>
+            <if test="butlerMobile != null and butlerMobile != ''">
+                AND o.butler_mobile = #{butlerMobile}
+            </if>
+            <if test="customerId != null and customerId != ''">
+                AND o.customer_id = #{customerId}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND o.customer_name like CONCAT('%',#{customerName},'%')
+            </if>
+            <if test="customerMobile != null and customerMobile != ''">
+                AND o.customer_mobile = #{customerMobile}
+            </if>
+            <if test="customerAreaCode != null and customerAreaCode != ''">
+                AND o.customer_area_code like CONCAT(#{customerAreaCode},'%')
+            </if>
+            <if test="servicePersonalId != null and servicePersonalId != ''">
+                AND s.service_personal_id = #{servicePersonalId}
+            </if>
+            <if test="servicePersonalName != null and servicePersonalName != ''">
+                AND s.service_personal_name like CONCAT('%',#{servicePersonalName},'%')
+            </if>
+            <if test="workTypeId != null and workTypeId != ''">
+                AND o.work_type_id = #{workTypeId}
+            </if>
+            <if test="startCreateDate != null">
+                AND o.create_time &gt;= #{startCreateDate}
+            </if>
+            <if test="endCreateDate != null">
+                AND o.create_time &lt;= #{endCreateDate}
+            </if>
+            AND not exists (
+            select 1
+            from t_after_sale_apply a
+            where
+            (a.status = 1 or a.status = 3 or a.status = 4 or a.status = 5 or a.status = 8)
+            and
+            a.order_id = o.order_id
+            and
+            a.valid = 1
+            )
+            AND not exists (
+            select 1
+            from t_order_exchange_personal_record oepr
+            where
+            oepr.record_valid = 1
+            and
+            oepr.order_id = o.order_id
+            and
+            oepr.valid = 1
+            )
+        </where>
+        order by o.CREATE_TIME desc
+    </select>
+    <select id="pageOrderPay" parameterType="com.emotte.hss.common.vo.order.OrderPageReqVO" resultType="com.emotte.hss.common.vo.order.OrderPageRepVO">
+        select
+        o.order_id as "orderId",
+        o.company_id as "companyId",
+        o.company_name as "companyName",
+        o.order_no as "orderNo",
+        o.order_type as "orderType",
+        o.order_status as "orderStatus",
+        o.customer_id as "customerId",
+        o.customer_name as "customerName",
+        o.customer_mobile as "customerMobile",
+        o.customer_area_code as "customerAreaCode",
+        o.customer_area as "customerArea",
+        o.service_address as "serviceAddress",
+        o.work_type_id as "workTypeId",
+        o.work_type as "workType",
+        o.paid_amount as "paidAmount",
+        o.deposit_amount as "depositAmount",
+        o.refund_amount as "refundAmount",
+        o.paid_service_amount as "paidServiceAmount",
+        o.create_by as "createBy",
+        o.create_by_name as "createByName",
+        o.butler_by as "butlerBy",
+        o.butler_name as "butlerName",
+        o.butler_mobile as "butlerMobile",
+        o.create_time as "createTime",
+        o.update_time as "updateTime",
+        s.service_personal_id as "servicePersonalId",
+        s.service_personal_name as "servicePersonalName",
+        s.service_personal_mobile as "servicePersonalMobile",
+        s.service_personal_company_id as "servicePersonalCompanyId",
+        s.service_personal_company_name as "servicePersonalCompanyName"
+        from t_order o
+        left join t_order_service_personal_rp s on o.order_id = s.order_id
+        <where>
+            o.order_status = 2
+            AND s.valid = 1
+            AND o.valid = 1
+            AND s.service_personal_status = 3
+            <if test="companyId != null and companyId != ''">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no = #{orderNo}
+            </if>
+            <if test="companyName != null and companyName != ''">
+                AND o.company_name like CONCAT('%',#{companyName},'%')
+            </if>
+            <if test="butlerBy != null and butlerBy != ''">
+                AND o.butler_by = #{butlerBy}
+            </if>
+            <if test="butlerName != null and butlerName != ''">
+                AND o.butler_name like CONCAT('%',#{butlerName},'%')
+            </if>
+            <if test="butlerMobile != null and butlerMobile != ''">
+                AND o.butler_mobile = #{butlerMobile}
+            </if>
+            <if test="customerId != null and customerId != ''">
+                AND o.customer_id = #{customerId}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND o.customer_name like CONCAT('%',#{customerName},'%')
+            </if>
+            <if test="customerMobile != null and customerMobile != ''">
+                AND o.customer_mobile = #{customerMobile}
+            </if>
+            <if test="customerAreaCode != null and customerAreaCode != ''">
+                AND o.customer_area_code like CONCAT(#{customerAreaCode},'%')
+            </if>
+            <if test="servicePersonalId != null and servicePersonalId != ''">
+                AND s.service_personal_id = #{servicePersonalId}
+            </if>
+            <if test="servicePersonalName != null and servicePersonalName != ''">
+                AND s.service_personal_name like CONCAT('%',#{servicePersonalName},'%')
+            </if>
+            <if test="workTypeId != null and workTypeId != ''">
+                AND o.work_type_id = #{workTypeId}
+            </if>
+            <if test="startCreateDate != null">
+                AND o.create_time &gt;= #{startCreateDate}
+            </if>
+            <if test="endCreateDate != null">
+                AND o.create_time &lt;= #{endCreateDate}
+            </if>
+            AND exists (
+            select 1
+            from t_order_transaction t
+            where
+            t.paid_amount &lt; t.transaction_amount
+            and
+            t.order_id = o.order_id
+            and
+            t.in_or_out = 1
+            and
+            t.account_period = 1
+            and
+            t.valid = 1
+            )
+            AND not exists (
+            select 1
+            from t_after_sale_apply a
+            where
+            (a.status = 1 or a.status = 3 or a.status = 4 or a.status = 5 or a.status = 8)
+            and
+            a.order_id = o.order_id
+            and
+            a.valid = 1
+            )
+            AND not exists (
+            select 1
+            from t_order_exchange_personal_record oepr
+            where
+            oepr.record_valid = 1
+            and
+            oepr.order_id = o.order_id
+            and
+            oepr.valid = 1
+            )
+        </where>
+        order by o.CREATE_TIME desc
+    </select>
+    <select id="pageOrderOnDoor" parameterType="com.emotte.hss.common.vo.order.OrderPageReqVO" resultType="com.emotte.hss.common.vo.order.OrderPageRepVO">
+        select
+        o.order_id as "orderId",
+        o.company_id as "companyId",
+        o.company_name as "companyName",
+        o.order_no as "orderNo",
+        o.order_type as "orderType",
+        o.order_status as "orderStatus",
+        o.customer_id as "customerId",
+        o.customer_name as "customerName",
+        o.customer_mobile as "customerMobile",
+        o.customer_area_code as "customerAreaCode",
+        o.customer_area as "customerArea",
+        o.service_address as "serviceAddress",
+        o.work_type_id as "workTypeId",
+        o.work_type as "workType",
+        o.paid_amount as "paidAmount",
+        o.deposit_amount as "depositAmount",
+        o.refund_amount as "refundAmount",
+        o.paid_service_amount as "paidServiceAmount",
+        o.create_by as "createBy",
+        o.create_by_name as "createByName",
+        o.butler_by as "butlerBy",
+        o.butler_name as "butlerName",
+        o.butler_mobile as "butlerMobile",
+        o.create_time as "createTime",
+        o.update_time as "updateTime",
+        s.service_personal_id as "servicePersonalId",
+        s.service_personal_name as "servicePersonalName",
+        s.service_personal_mobile as "servicePersonalMobile",
+        s.service_personal_company_id as "servicePersonalCompanyId",
+        s.service_personal_company_name as "servicePersonalCompanyName"
+        from t_order o
+        left join t_order_service_personal_rp s on o.order_id = s.order_id
+        <where>
+            AND o.valid = 1
+            AND s.valid = 1
+            AND s.service_personal_status = 3
+            and o.order_status = 2
+            <if test="companyId != null and companyId != ''">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no = #{orderNo}
+            </if>
+            <if test="companyName != null and companyName != ''">
+                AND o.company_name like CONCAT('%',#{companyName},'%')
+            </if>
+            <if test="butlerBy != null and butlerBy != ''">
+                AND o.butler_by = #{butlerBy}
+            </if>
+            <if test="butlerName != null and butlerName != ''">
+                AND o.butler_name like CONCAT('%',#{butlerName},'%')
+            </if>
+            <if test="butlerMobile != null and butlerMobile != ''">
+                AND o.butler_mobile = #{butlerMobile}
+            </if>
+            <if test="customerId != null and customerId != ''">
+                AND o.customer_id = #{customerId}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND o.customer_name like CONCAT('%',#{customerName},'%')
+            </if>
+            <if test="customerMobile != null and customerMobile != ''">
+                AND o.customer_mobile = #{customerMobile}
+            </if>
+            <if test="customerAreaCode != null and customerAreaCode != ''">
+                AND o.customer_area_code like CONCAT(#{customerAreaCode},'%')
+            </if>
+            <if test="servicePersonalId != null and servicePersonalId != ''">
+                AND s.service_personal_id = #{servicePersonalId}
+            </if>
+            <if test="servicePersonalName != null and servicePersonalName != ''">
+                AND s.service_personal_name like CONCAT('%',#{servicePersonalName},'%')
+            </if>
+            <if test="workTypeId != null and workTypeId != ''">
+                AND o.work_type_id = #{workTypeId}
+            </if>
+            <if test="startCreateDate != null">
+                AND o.create_time &gt;= #{startCreateDate}
+            </if>
+            <if test="endCreateDate != null">
+                AND o.create_time &lt;= #{endCreateDate}
+            </if>
+            AND exists (
+            select 1
+            from t_order_transaction t
+            where
+            t.paid_amount &gt;= t.transaction_amount
+            and
+            t.order_id = o.order_id
+            and
+            t.account_period = 1
+            and
+            t.valid = 1
+            )
+            AND not exists (
+            select 1
+            from t_after_sale_apply a
+            where
+            (a.status = 1 or a.status = 3 or a.status = 4 or a.status = 5 or a.status = 8)
+            and
+            a.order_id = o.order_id
+            and
+            a.valid = 1
+            )
+            AND not exists (
+            select 1
+            from t_order_exchange_personal_record oepr
+            where
+            oepr.record_valid = 1
+            and
+            oepr.order_id = o.order_id
+            and
+            oepr.valid = 1
+            )
+        </where>
+        order by o.CREATE_TIME desc
+    </select>
+    <select id="pageOrderService" parameterType="com.emotte.hss.common.vo.order.OrderPageReqVO" resultType="com.emotte.hss.common.vo.order.OrderPageRepVO">
+        select
+        o.order_id as "orderId",
+        o.company_id as "companyId",
+        o.company_name as "companyName",
+        o.order_no as "orderNo",
+        o.order_type as "orderType",
+        o.order_status as "orderStatus",
+        o.customer_id as "customerId",
+        o.customer_name as "customerName",
+        o.customer_mobile as "customerMobile",
+        o.customer_area_code as "customerAreaCode",
+        o.customer_area as "customerArea",
+        o.service_address as "serviceAddress",
+        o.work_type_id as "workTypeId",
+        o.work_type as "workType",
+        o.paid_amount as "paidAmount",
+        o.deposit_amount as "depositAmount",
+        o.refund_amount as "refundAmount",
+        o.paid_service_amount as "paidServiceAmount",
+        o.create_by as "createBy",
+        o.create_by_name as "createByName",
+        o.butler_by as "butlerBy",
+        o.butler_name as "butlerName",
+        o.butler_mobile as "butlerMobile",
+        o.create_time as "createTime",
+        o.update_time as "updateTime",
+        s.service_personal_id as "servicePersonalId",
+        s.service_personal_name as "servicePersonalName",
+        s.service_personal_mobile as "servicePersonalMobile",
+        s.service_personal_company_id as "servicePersonalCompanyId",
+        s.service_personal_company_name as "servicePersonalCompanyName"
+        from t_order o
+        left join t_order_service_personal_rp s on o.order_id = s.order_id
+        <where>
+            o.valid = 1
+            AND s.valid = 1
+            AND s.service_personal_status = 1
+            AND o.order_status = 3
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no = #{orderNo}
+            </if>
+            <if test="companyId != null and companyId != ''">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="companyName != null and companyName != ''">
+                AND o.company_name like CONCAT('%',#{companyName},'%')
+            </if>
+            <if test="butlerBy != null and butlerBy != ''">
+                AND o.butler_by = #{butlerBy}
+            </if>
+            <if test="butlerName != null and butlerName != ''">
+                AND o.butler_name like CONCAT('%',#{butlerName},'%')
+            </if>
+            <if test="butlerMobile != null and butlerMobile != ''">
+                AND o.butler_mobile = #{butlerMobile}
+            </if>
+            <if test="customerId != null and customerId != ''">
+                AND o.customer_id = #{customerId}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND o.customer_name like CONCAT('%',#{customerName},'%')
+            </if>
+            <if test="customerMobile != null and customerMobile != ''">
+                AND o.customer_mobile = #{customerMobile}
+            </if>
+            <if test="customerAreaCode != null and customerAreaCode != ''">
+                AND o.customer_area_code like CONCAT(#{customerAreaCode},'%')
+            </if>
+            <if test="servicePersonalId != null and servicePersonalId != ''">
+                AND s.service_personal_id = #{servicePersonalId}
+            </if>
+            <if test="servicePersonalName != null and servicePersonalName != ''">
+                AND s.service_personal_name like CONCAT('%',#{servicePersonalName},'%')
+            </if>
+            <if test="workTypeId != null and workTypeId != ''">
+                AND o.work_type_id = #{workTypeId}
+            </if>
+            <if test="startCreateDate != null">
+                AND o.create_time &gt;= #{startCreateDate}
+            </if>
+            <if test="endCreateDate != null">
+                AND o.create_time &lt;= #{endCreateDate}
+            </if>
+            AND not exists (
+            select 1
+            from t_after_sale_apply a
+            where
+            (a.status = 1 or a.status = 3 or a.status = 4 or a.status = 5 or a.status = 8)
+            and
+            a.order_id = o.order_id
+            and
+            a.valid = 1
+            )
+            AND not exists (
+            select 1
+            from t_order_exchange_personal_record oepr
+            where
+            oepr.record_valid = 1
+            and
+            oepr.order_id = o.order_id
+            and
+            oepr.valid = 1
+            )
+        </where>
+        order by o.CREATE_TIME desc
+    </select>
+    <select id="pageOrderAfterSale" parameterType="com.emotte.hss.common.vo.order.OrderPageReqVO" resultType="com.emotte.hss.common.vo.order.OrderPageRepVO">
+        select
+        o.order_id as "orderId",
+        o.company_id as "companyId",
+        o.company_name as "companyName",
+        o.order_no as "orderNo",
+        o.order_type as "orderType",
+        o.order_status as "orderStatus",
+        o.customer_id as "customerId",
+        o.customer_name as "customerName",
+        o.customer_mobile as "customerMobile",
+        o.customer_area_code as "customerAreaCode",
+        o.customer_area as "customerArea",
+        o.service_address as "serviceAddress",
+        o.work_type_id as "workTypeId",
+        o.work_type as "workType",
+        o.paid_amount as "paidAmount",
+        o.deposit_amount as "depositAmount",
+        o.refund_amount as "refundAmount",
+        o.paid_service_amount as "paidServiceAmount",
+        o.create_by as "createBy",
+        o.create_by_name as "createByName",
+        o.butler_by as "butlerBy",
+        o.butler_name as "butlerName",
+        o.butler_mobile as "butlerMobile",
+        o.create_time as "createTime",
+        o.update_time as "updateTime"
+        from t_order o
+        <where>
+            o.valid = 1
+            <if test="companyId != null and companyId != ''">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no = #{orderNo}
+            </if>
+            <if test="companyName != null and companyName != ''">
+                AND o.company_name like CONCAT('%',#{companyName},'%')
+            </if>
+            <if test="butlerBy != null and butlerBy != ''">
+                AND o.butler_by = #{butlerBy}
+            </if>
+            <if test="butlerName != null and butlerName != ''">
+                AND o.butler_name like CONCAT('%',#{butlerName},'%')
+            </if>
+            <if test="butlerMobile != null and butlerMobile != ''">
+                AND o.butler_mobile = #{butlerMobile}
+            </if>
+            <if test="customerId != null and customerId != ''">
+                AND o.customer_id = #{customerId}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND o.customer_name like CONCAT('%',#{customerName},'%')
+            </if>
+            <if test="customerMobile != null and customerMobile != ''">
+                AND o.customer_mobile = #{customerMobile}
+            </if>
+            <if test="customerAreaCode != null and customerAreaCode != ''">
+                AND o.customer_area_code CONCAT(#{customerAreaCode},'%')
+            </if>
+            <if test="workTypeId != null and workTypeId != ''">
+                AND o.work_type_id = #{workTypeId}
+            </if>
+            <if test="startCreateDate != null">
+                AND o.create_time &gt;= #{startCreateDate}
+            </if>
+            <if test="endCreateDate != null">
+                AND o.create_time &lt;= #{endCreateDate}
+            </if>
+            AND (
+            exists (
+            select 1
+            from t_after_sale_apply a
+            where
+            (a.status = 1 or a.status = 3 or a.status = 4 or a.status = 5 or a.status = 8)
+            and
+            a.order_id = o.order_id
+            and
+            a.valid = 1
+            )
+            or exists (
+            select 1
+            from t_order_exchange_personal_record oepr
+            where
+            oepr.record_valid = 1
+            and
+            oepr.order_id = o.order_id
+            and
+            oepr.valid = 1
+            )
+            )
+        </where>
+        order by o.CREATE_TIME desc
+    </select>
+
+    <select id="pageOrder" parameterType="com.emotte.hss.common.vo.order.OrderPageReqVO" resultType="com.emotte.hss.common.vo.order.OrderPageRepVO">
+        select
+        o.order_id as "orderId",
+        o.company_id as "companyId",
+        o.company_name as "companyName",
+        o.order_no as "orderNo",
+        o.order_type as "orderType",
+        o.order_status as "orderStatus",
+        o.customer_id as "customerId",
+        o.customer_name as "customerName",
+        o.customer_mobile as "customerMobile",
+        o.customer_area_code as "customerAreaCode",
+        o.customer_area as "customerArea",
+        o.service_address as "serviceAddress",
+        o.work_type_id as "workTypeId",
+        o.work_type as "workType",
+        o.paid_amount as "paidAmount",
+        o.deposit_amount as "depositAmount",
+        o.refund_amount as "refundAmount",
+        o.paid_service_amount as "paidServiceAmount",
+        o.create_by as "createBy",
+        o.create_by_name as "createByName",
+        o.butler_by as "butlerBy",
+        o.butler_name as "butlerName",
+        o.butler_mobile as "butlerMobile",
+        o.create_time as "createTime",
+        o.update_time as "updateTime"
+        from t_order o
+        <where>
+            o.valid = 1
+            <if test="orderStatusMultiple != null and orderStatusMultiple != ''">
+                AND o.order_status in (${orderStatusMultiple})
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                AND o.order_status = #{orderStatus}
+            </if>
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no = #{orderNo}
+            </if>
+            <if test="companyId != null and companyId != ''">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="companyName != null and companyName != ''">
+                AND o.company_name like CONCAT('%',#{companyName},'%')
+            </if>
+            <if test="butlerBy != null and butlerBy != ''">
+                AND o.butler_by = #{butlerBy}
+            </if>
+            <if test="butlerName != null and butlerName != ''">
+                AND o.butler_name like CONCAT('%',#{butlerName},'%')
+            </if>
+            <if test="customerId != null and customerId != ''">
+                AND o.customer_id = #{customerId}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND o.customer_name like CONCAT('%',#{customerName},'%')
+            </if>
+            <if test="customerAreaCode != null and customerAreaCode != ''">
+                AND o.customer_area_code like CONCAT(#{customerAreaCode},'%')
+            </if>
+            <if test="workTypeId != null and workTypeId != ''">
+                AND o.work_type_id = #{workTypeId}
+            </if>
+            <if test="startCreateDate != null">
+                AND o.create_time &gt;= #{startCreateDate}
+            </if>
+            <if test="endCreateDate != null">
+                AND o.create_time &lt;= #{endCreateDate}
+            </if>
+            <if test="butlerMobile != null and butlerMobile != ''">
+                AND o.butler_mobile = #{butlerMobile}
+            </if>
+            <if test="customerMobile != null and customerMobile != ''">
+                AND o.customer_mobile = #{customerMobile}
+            </if>
+            <if test="keyWordForMobile != null and keyWordForMobile != ''">
+                AND (o.customer_mobile = #{keyWordForMobile} or o.butler_mobile = #{keyWordForMobile})
+            </if>
+        </where>
+        order by o.CREATE_TIME desc
+    </select>
+
+    <select id="pageHistoryOrder" parameterType="com.emotte.hss.common.vo.order.OrderPageReqVO" resultType="com.emotte.hss.common.vo.order.OrderPageRepVO">
+        select
+        o.order_id as "orderId",
+        o.company_id as "companyId",
+        o.company_name as "companyName",
+        o.order_no as "orderNo",
+        o.order_type as "orderType",
+        o.order_status as "orderStatus",
+        o.customer_id as "customerId",
+        o.customer_name as "customerName",
+        o.customer_mobile as "customerMobile",
+        o.customer_area_code as "customerAreaCode",
+        o.customer_area as "customerArea",
+        o.service_address as "serviceAddress",
+        o.work_type_id as "workTypeId",
+        o.work_type as "workType",
+        o.paid_amount as "paidAmount",
+        o.deposit_amount as "depositAmount",
+        o.refund_amount as "refundAmount",
+        o.paid_service_amount as "paidServiceAmount",
+        o.create_by as "createBy",
+        o.create_by_name as "createByName",
+        o.butler_by as "butlerBy",
+        o.butler_name as "butlerName",
+        o.butler_mobile as "butlerMobile",
+        o.create_time as "createTime",
+        o.update_time as "updateTime"
+        from t_order o
+        <where>
+            o.valid = 1
+            AND o.order_status in (5, 6, 7)
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no = #{orderNo}
+            </if>
+            <if test="companyId != null and companyId != ''">
+                AND o.company_id = #{companyId}
+            </if>
+            <if test="companyName != null and companyName != ''">
+                AND o.company_name like CONCAT('%',#{companyName},'%')
+            </if>
+            <if test="butlerBy != null and butlerBy != ''">
+                AND o.butler_by = #{butlerBy}
+            </if>
+            <if test="butlerName != null and butlerName != ''">
+                AND o.butler_name like CONCAT('%',#{butlerName},'%')
+            </if>
+            <if test="customerId != null and customerId != ''">
+                AND o.customer_id = #{customerId}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND o.customer_name like CONCAT('%',#{customerName},'%')
+            </if>
+            <if test="customerAreaCode != null and customerAreaCode != ''">
+                AND o.customer_area_code like CONCAT(#{customerAreaCode},'%')
+            </if>
+            <if test="workTypeId != null and workTypeId != ''">
+                AND o.work_type_id = #{workTypeId}
+            </if>
+            <if test="startCreateDate != null">
+                AND o.create_time &gt;= #{startCreateDate}
+            </if>
+            <if test="endCreateDate != null">
+                AND o.create_time &lt;= #{endCreateDate}
+            </if>
+            <if test="butlerMobile != null and butlerMobile != ''">
+                AND o.butler_mobile = #{butlerMobile}
+            </if>
+            <if test="customerMobile != null and customerMobile != ''">
+                AND o.customer_mobile = #{customerMobile}
+            </if>
+            <if test="keyWordForMobile != null and keyWordForMobile != ''">
+                AND (o.customer_mobile = #{keyWordForMobile} or o.butler_mobile = #{keyWordForMobile})
+            </if>
+            AND
+            not exists (
+            select 1
+            from t_after_sale_apply a
+            where
+            (a.status = 1 or a.status = 3 or a.status = 4 or a.status = 5 or a.status = 8)
+            and
+            a.order_id = o.order_id
+            and
+            a.valid = 1
+            )
+            AND not exists (
+            select 1
+            from t_order_exchange_personal_record oepr
+            where
+            oepr.record_valid = 1
+            and
+            oepr.order_id = o.order_id
+            and
+            oepr.valid = 1
+            )
+        </where>
+        order by o.CREATE_TIME desc
+    </select>
+
+    <select id="pageOrderWithPerson" resultType="com.emotte.hss.common.vo.order.OrderWithPersonRepVO">
+        SELECT
+        t.order_id AS "orderId",
+        t.order_no AS "orderNo",
+        t.order_type AS "cateType",
+        t.order_status AS "status",
+        DATE_FORMAT(cp.contract_start_date, '%Y-%m-%d') AS "startTime",
+        DATE_FORMAT(cp.contract_end_date, '%Y-%m-%d') AS "endTime",
+        IFNULL(cp.contract_amount, 0) AS "nowPrice",
+        t.customer_id AS "userId",
+        t.customer_name AS "userName",
+        t.customer_mobile AS "mobile",
+        t.customer_area_code AS "userAreaCode",
+        t.customer_area AS "userArea",
+        t.service_address AS "address",
+        CONCAT(t.customer_area,t.service_address) AS "receiverAddress",
+        op.service_personal_id AS "personId",
+        t.work_type AS "productName",
+        <!-- 为了保证状态和原有erp系统一致手动对应服务人员状态值 -->
+        (
+        CASE op.service_personal_status
+        WHEN 1 THEN
+        8
+        WHEN 2 THEN
+        9
+        WHEN 3 THEN
+        6
+        ELSE -1
+        END
+        ) AS "interviewType",
+        (
+        CASE op.service_personal_status
+        WHEN 1 THEN
+        '上户中'
+        WHEN 2 THEN
+        '已下户'
+        WHEN 3 THEN
+        '面试成功'
+        ELSE
+        '其他'
+        END
+        ) AS "interviewTypeStr",
+        (
+        CASE op.service_personal_status
+        WHEN 1 THEN
+        '您正在上户'
+        WHEN 2 THEN
+        '您已经下户'
+        WHEN 3 THEN
+        '恭喜您面试成功，等待签约上户'
+        ELSE
+        '其他'
+        END
+        ) AS "typeRemark",
+        "" AS "remark",
+        1 AS "customerLevel"
+        FROM
+        t_order_service_personal_rp op
+        LEFT JOIN t_order t ON op.order_id = t.order_id
+        LEFT JOIN (
+        SELECT
+        ocrp.contract_id,
+        ocrp.contract_no,
+        ocrp.order_id,
+        ocrp.contract_amount,
+        ocrp.contract_start_date,
+        ocrp.contract_end_date
+        FROM
+        t_order_contract_rp ocrp
+        WHERE
+        ocrp.valid = 1
+        AND ocrp.contract_status = 1
+        ) cp ON t.order_id = cp.order_id
+        WHERE
+        op.valid = 1
+        AND t.valid = 1
+        AND op.service_personal_id = #{personId}
+        <choose>
+            <when test="statusList != null and statusList.size() > 0">
+                AND op.service_personal_status IN
+                <foreach collection="statusList" item="status" open="(" separator="," close=")">
+                    #{status}
+                </foreach>
+            </when>
+            <otherwise>
+                AND 1 = 0
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="getOrderWithPersonDetail" resultType="com.emotte.hss.common.vo.order.OrderWithPersonDetailRepVO">
+        SELECT
+            t.order_id AS "id",
+            t.order_no AS "orderCode",
+            IFNULL(cp.contract_amount, 0) AS "price",
+            t.work_type_id AS "orderType",
+            t.work_type AS "orderTypeStr",
+            t.customer_area_code AS "receiverAddressCode",
+            t.customer_area AS "receiverAddress",
+            t.service_address AS "address",
+            DATE_FORMAT(cp.contract_start_date, '%Y-%m-%d') AS "startTime",
+            DATE_FORMAT(cp.contract_end_date, '%Y-%m-%d') AS "endTime",
+            (
+                CASE op.service_personal_status
+                WHEN 1 THEN
+                    8
+                WHEN 2 THEN
+                    9
+                WHEN 3 THEN
+                    6
+                ELSE
+                    - 1
+                END
+            ) AS "interviewType",
+            (
+                CASE op.service_personal_status
+                WHEN 1 THEN
+                    '上户中'
+                WHEN 2 THEN
+                    '已下户'
+                WHEN 3 THEN
+                    '面试成功'
+                ELSE
+                    '其他'
+                END
+            ) AS "interviewTypeStr",
+            (
+                CASE op.service_personal_status
+                WHEN 1 THEN
+                    '您正在上户'
+                WHEN 2 THEN
+                    '您已经下户'
+                WHEN 3 THEN
+                    '恭喜您面试成功，等待签约上户'
+                ELSE
+                    '其他'
+                END
+            ) AS "typeRemark",
+            (
+                CASE t.order_type
+                WHEN 2 THEN
+                    3
+                ELSE
+                    '其他'
+                END
+            ) AS "linedType",
+            "" AS "remark",
+            "无其他要求" AS "sexStr"
+        FROM
+            t_order_service_personal_rp op
+        LEFT JOIN t_order t ON op.order_id = t.order_id
+        LEFT JOIN (
+            SELECT
+                ocrp.contract_id,
+                ocrp.contract_no,
+                ocrp.order_id,
+                ocrp.contract_amount,
+                ocrp.contract_start_date,
+                ocrp.contract_end_date
+            FROM
+                t_order_contract_rp ocrp
+            WHERE
+                ocrp.valid = 1
+            AND ocrp.contract_status = 1
+        ) cp ON t.order_id = cp.order_id
+        WHERE
+            t.valid = 1
+            AND t.order_id = #{orderId}
+            AND op.service_personal_id = #{personId}
+            ORDER BY op.create_time DESC
+            LIMIT 1
+    </select>
+
+    <select id="toOrderCancel" resultType="com.emotte.hss.common.vo.order.OrderPageRepVO">
+    SELECT
+	o.order_id
+    FROM
+	t_order o
+    WHERE
+	valid = 1
+	AND ( o.order_status = 1 OR o.order_status = 2 )
+	AND o.paid_amount = 0
+	AND datediff( NOW( ), o.create_time ) >= 3
+    </select>
+</mapper>

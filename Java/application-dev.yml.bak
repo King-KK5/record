@@ -1,0 +1,165 @@
+server:
+  port: 10110
+  servlet:
+    context-path: /hss
+spring:
+#  hystrix:
+#    metrics:
+#      polling-interval-ms: 5000
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: non_null
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://10.20.3.198:3306/hss?useUnicode=true&characterEncoding=utf8&useSSL=false
+    username: root
+    password: root
+    druid:
+      #2.连接池配置
+      #初始化连接池的连接数量 大小，最小，最大
+      initial-size: 5
+      min-idle: 5
+      max-active: 20
+      #配置获取连接等待超时的时间
+      max-wait: 60000
+      #配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+      time-between-eviction-runs-millis: 60000
+      # 配置一个连接在池中最小生存的时间，单位是毫秒
+      min-evictable-idle-time-millis: 30000
+      validation-query: SELECT 1 FROM DUAL
+      test-while-idle: true
+      test-on-borrow: true
+      test-on-return: false
+      # 是否缓存preparedStatement，也就是PSCache  官方建议MySQL下建议关闭   个人建议如果想用SQL防火墙 建议打开
+      pool-prepared-statements: true
+      max-pool-prepared-statement-per-connection-size: 20
+      # 配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙
+      filter:
+        stat:
+          merge-sql: true
+          slow-sql-millis: 5000
+      #3.基础监控配置
+      web-stat-filter:
+        enabled: true
+        url-pattern: /*
+        #设置不统计哪些URL
+        exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
+        session-stat-enable: true
+        session-stat-max-count: 100
+      stat-view-servlet:
+        enabled: true
+        url-pattern: /druid/*
+        reset-enable: true
+        #设置监控页面的登录名和密码
+        login-username: admin
+        login-password: admin
+        allow: 127.0.0.1
+  rabbitmq:
+    port: 5672
+    host: 10.20.3.199
+    username: guest
+    password: guest
+    template:
+      exchange: sms
+  zipkin:
+    base-url: http://10.20.3.199:9411
+    sender:
+      type: web
+  sleuth:
+    sampler:
+      probability: 1.0
+
+  redis:
+    host: 10.20.3.199
+    port: 6379
+    password: test123
+
+
+#mybatis
+mybatis-plus:
+  mapper-locations: classpath:mapper/**/*.xml
+  #实体扫描，多个package用逗号或者分号分隔
+  typeAliasesPackage: com.emotte.hss.core.*.model.po
+  global-config:
+    #主键类型  0:"数据库ID自增", 1:"用户输入ID",2:"全局唯一ID (数字类型唯一ID)", 3:"全局唯一ID UUID";
+    id-type: 2
+    #字段策略 0:"忽略判断",1:"非 NULL 判断",2:"非空判断"
+    field-strategy: 1
+    #驼峰下划线转换
+    db-column-underline: true
+    #刷新mapper 调试神器
+    refresh-mapper: true
+    #数据库大写下划线转换
+    #capital-mode: true
+    #序列接口实现类配置
+    #key-generator: com.baomidou.springboot.xxx
+    #逻辑删除配置
+    logic-delete-value: -1
+    logic-not-delete-0: 0
+    #自定义填充策略接口实现
+    #meta-object-handler: com.baomidou.springboot.xxx
+    #自定义SQL注入器
+  #    sql-injector: com.baomidou.mybatisplus.mapper.LogicSqlInjector
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    call-setters-on-nulls: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  level:
+    org.springframework: debug
+  config: "classpath:logback-spring.xml"
+
+pay:
+  #支付回调
+  notifyUrl: payBack
+  #支付路径
+  payUrl: https://mfdd.thanks.echosite.cn/h5-mobile/customer_pay
+  #支付参数A
+  payUrlParamA: userInfoId
+  #支付参数B
+  payUrlParamB: orderId
+  #支付参数C
+  payUrlParamC: orderTransactionId
+  #缴费截止时间
+  payDeadlineNum: 3
+  #支付回调时缴费周期触发服务费分账要大于的月份
+  prepaidMonth: 3
+
+#合同客户和服务人员签字链接
+contract:
+   customer:
+      url: https://mfdd.thanks.echosite.cn/h5-mobile/customer_see_agreement?contractId={contractId}&userInfoId={userInfoId}
+   personal:
+      url: https://mfdd.thanks.echosite.cn/h5-mobile/servicer/servicer_see_agreement?contractId={contractId}&userInfoId={userInfoId}
+
+#售后客户确认链接
+afterSale:
+  customer:
+    url: https://mfdd.thanks.echosite.cn/h5-mobile/customer_apply_refund?afterSaleApplyId={afterSaleApplyId}&userInfoId={userInfoId}
+
+#服务费确认链接
+salary:
+  afterSale:
+    #售后服务人员服务费确认
+    personal:
+      url: https://mfdd.thanks.echosite.cn/h5-mobile/servicer/servicer_after_sales?salaryId={salaryId}&userInfoId={userInfoId}
+    #售后客户服务费确认
+    customer:
+      url: https://mfdd.thanks.echosite.cn/h5-mobile/customer_after_sales?salaryId={salaryId}&userInfoId={userInfoId}
+  #正常服务费填报服务人员确认
+  personal:
+    url: https://mfdd.thanks.echosite.cn/h5-mobile/servicer_salary_confirm?salaryId={salaryId}&userInfoId={userInfoId}
+  #正常服务费填报客户确认
+  customer:
+    url: https://mfdd.thanks.echosite.cn/h5-mobile/customer_salary_confirm?salaryId={salaryId}&userInfoId={userInfoId}
+

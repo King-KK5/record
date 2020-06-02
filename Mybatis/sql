@@ -1,5 +1,5 @@
 ///批量执行多条sql时使用案例 begin end;
-<update id="updateScoreAndinsertScoreWater">
+<update id="updateScoreAndInsertScoreWater">
     begin
     <foreach collection="list" item="item">
       update AUTH.T_USER_SCORE_ACCOUNT
